@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import configPromise from '@/payload.config'
-import { revenueCatService } from '@/lib/revenueCatService'
+import { yocoService } from '@/lib/yocoService'
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,8 +24,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Post ID is required' }, { status: 400 })
     }
 
-    // Fetch products from RevenueCat
-    const revenueCatProducts = await revenueCatService.getProducts()
+    // Fetch products from Yoco
+    const yocoProducts = await yocoService.getProducts()
     
     // If selectedProducts is provided, use those; otherwise use the default list
     const requestedProducts = selectedProducts && selectedProducts.length > 0 
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
           'gathering'
         ]
 
-    const productsToImport = revenueCatProducts.filter(product => 
+    const productsToImport = yocoProducts.filter(product => 
       requestedProducts.includes(product.id)
     )
 
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
           collection: 'packages',
           where: {
             post: { equals: postId },
-            revenueCatId: { equals: product.id }
+            yocoId: { equals: product.id }
           },
           limit: 1
         })
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
               category: product.category,
               minNights: product.period === 'hour' ? 1 : product.periodCount,
               maxNights: product.period === 'hour' ? 1 : product.periodCount,
-              revenueCatId: product.id,
+              yocoId: product.id,
               isEnabled: product.isEnabled,
               baseRate: product.price,
               features: product.features.map(feature => ({ feature }))
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
               category: product.category,
               minNights: product.period === 'hour' ? 1 : product.periodCount,
               maxNights: product.period === 'hour' ? 1 : product.periodCount,
-              revenueCatId: product.id,
+              yocoId: product.id,
               isEnabled: product.isEnabled,
               baseRate: product.price,
               features: product.features.map(feature => ({ feature }))
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
       totalProducts: productsToImport.length
     })
   } catch (error) {
-    console.error('Error syncing RevenueCat packages:', error)
+    console.error('Error syncing Yoco packages:', error)
     return NextResponse.json(
       { error: 'Failed to sync packages', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

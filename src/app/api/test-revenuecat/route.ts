@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { revenueCatService } from '@/lib/revenueCatService'
+import { yocoService } from '@/lib/yocoService'
 
 export async function GET(request: NextRequest) {
   try {
-    // Test RevenueCat service initialization
-    await revenueCatService.initialize()
+    // Test Yoco service initialization
+    await yocoService.initialize()
     
     // Test getting products
-    const products = await revenueCatService.getProducts()
+    const products = await yocoService.getProducts()
     
     return NextResponse.json({
       success: true,
-      message: 'RevenueCat integration is working',
+      message: 'Yoco integration is working',
       productsCount: products.length,
       products: products.map(p => ({
         id: p.id,
@@ -21,11 +21,11 @@ export async function GET(request: NextRequest) {
       }))
     })
   } catch (error) {
-    console.error('RevenueCat test failed:', error)
+    console.error('Yoco test failed:', error)
     return NextResponse.json(
       { 
         success: false,
-        error: 'RevenueCat integration failed', 
+        error: 'Yoco integration failed', 
         details: error instanceof Error ? error.message : 'Unknown error' 
       },
       { status: 500 }

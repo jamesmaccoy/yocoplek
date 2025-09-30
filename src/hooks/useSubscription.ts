@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRevenueCat } from '@/providers/RevenueCat'
+import { useYoco } from '@/providers/RevenueCat'
 
 export type SubscriptionStatus = {
   isSubscribed: boolean
@@ -12,7 +12,7 @@ export type SubscriptionStatus = {
 }
 
 export const useSubscription = (entitlementId?: string): SubscriptionStatus => {
-  const { customerInfo, isLoading: isRevenueCatLoading, error: revenueCatError } = useRevenueCat()
+  const { customerInfo, isLoading: isYocoLoading, error: yocoError } = useYoco()
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus>({
     isSubscribed: false,
     entitlements: [],
@@ -24,7 +24,7 @@ export const useSubscription = (entitlementId?: string): SubscriptionStatus => {
   useEffect(() => {
     const checkSubscription = async () => {
       try {
-        // First check with RevenueCat client-side
+        // First check with Yoco client-side
         if (customerInfo) {
           const entitlements = customerInfo.entitlements?.active || {};
           const activeEntitlementKeys = Object.keys(entitlements);

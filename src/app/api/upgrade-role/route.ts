@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import payload from 'payload'
-import { Purchases } from '@revenuecat/purchases-js'
+import { yocoService } from '@/lib/yocoService'
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,23 +37,13 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Check if user has an active subscription with RevenueCat
+    // Check if user has an active subscription with Yoco
     try {
-      const apiKey = process.env.NEXT_PUBLIC_REVENUECAT_PUBLIC_SDK_KEY
-      if (!apiKey) {
-        return NextResponse.json({ 
-          error: 'RevenueCat configuration missing' 
-        }, { status: 500 })
-      }
-
-      const purchases = await Purchases.configure({
-        apiKey: apiKey,
-        appUserId: userId,
-      })
-      const customerInfo = await purchases.getCustomerInfo()
+      await yocoService.initialize()
+      const customerInfo = await yocoService.getCustomerInfo(userId)
       
       // Check for active entitlements
-      const activeEntitlements = Object.keys(customerInfo.entitlements.active || {})
+      const activeEntitlements = Object.keys(customerInfo?.entitlements?.active || {})
       const hasActiveSubscription = activeEntitlements.length > 0
 
       if (!hasActiveSubscription) {
@@ -95,11 +85,11 @@ export async function POST(request: NextRequest) {
         activeEntitlements: activeEntitlements
       })
 
-    } catch (revenueCatError) {
-      console.error('RevenueCat error:', revenueCatError)
+    } catch (yocoError) {
+      console.error('Yoco error:', yocoError)
       return NextResponse.json({ 
         error: 'Failed to verify subscription status',
-        details: revenueCatError instanceof Error ? revenueCatError.message : 'Unknown error'
+        details: yocoError instanceof Error ? yocoError.message : 'Unknown error'
       }, { status: 500 })
     }
 

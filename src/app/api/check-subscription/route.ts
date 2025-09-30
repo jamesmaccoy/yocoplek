@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Purchases, PurchasesConfig } from '@revenuecat/purchases-js'
+import { yocoService } from '@/lib/yocoService'
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,47 +10,36 @@ export async function GET(request: NextRequest) {
     }
 
     // Get the user ID from the auth token
-    
     const token = authCookie.value
     const [header, payload, signature] = token.split('.')
     if (!payload) throw new Error('Invalid token: missing payload')
     const decodedPayload = JSON.parse(Buffer.from(payload, 'base64').toString())
     const userId = decodedPayload.id
 
-    // Initialize RevenueCat with the Web Billing API key using new API v2
-    const apiKey = process.env.NEXT_PUBLIC_REVENUECAT_PUBLIC_SDK_KEY;
-    if (!apiKey) throw new Error('RevenueCat public API key is missing');
-    
-    const purchases = await Purchases.configure({
-      apiKey: apiKey,
-      appUserId: userId,
-    })
+    // Initialize Yoco service
+    await yocoService.initialize()
 
-    // Get customer info
-    const customerInfo = await purchases.getCustomerInfo()
+    // Get customer info from Yoco
+    const customerInfo = await yocoService.getCustomerInfo(userId)
     
     // Extract active entitlement IDs
-    const activeEntitlements = Object.keys(customerInfo.entitlements.active || {});
+    const activeEntitlements = Object.keys(customerInfo?.entitlements?.active || {});
     const hasActiveSubscription = activeEntitlements.length > 0;
     
-
-    // Set the RevenueCat customer ID in a cookie for cross-device sync
+    // Set the Yoco customer ID in a cookie for cross-device sync
     const response = NextResponse.json({ 
       hasActiveSubscription,
-      customerId: customerInfo.originalAppUserId,
+      customerId: customerInfo?.id || userId,
       activeEntitlements: activeEntitlements,
     })
 
-    // Set the RevenueCat customer ID cookie
-    response.cookies.set('rc-customer-id', customerInfo.originalAppUserId, {
+    // Set the Yoco customer ID cookie
+    response.cookies.set('yoco-customer-id', customerInfo?.id || userId, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/'
     })
-
-    // Fetch offerings
-    const offerings = await purchases.getOfferings()
 
     return response
   } catch (error) {
