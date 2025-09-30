@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
           collection: 'packages',
           where: {
             post: { equals: postId },
-            yocoId: { equals: product.id }
+            revenueCatId: { equals: product.id }
           },
           limit: 1
         })
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
               category: product.category,
               minNights: product.period === 'hour' ? 1 : product.periodCount,
               maxNights: product.period === 'hour' ? 1 : product.periodCount,
-              yocoId: product.id,
+              revenueCatId: product.id,
               isEnabled: product.isEnabled,
               baseRate: product.price,
               features: product.features.map(feature => ({ feature }))
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
               category: product.category,
               minNights: product.period === 'hour' ? 1 : product.periodCount,
               maxNights: product.period === 'hour' ? 1 : product.periodCount,
-              yocoId: product.id,
+              revenueCatId: product.id,
               isEnabled: product.isEnabled,
               baseRate: product.price,
               features: product.features.map(feature => ({ feature }))

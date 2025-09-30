@@ -18,7 +18,7 @@ export interface YocoPaymentLink {
   url: string
   created_at: string
   updated_at: string
-  customer_description?: string
+  customer_description: string
   customer_reference: string
   order: {
     id: string
@@ -46,16 +46,21 @@ export interface YocoPaymentLink {
 
 export interface YocoCustomer {
   id: string
-  entitlements: any
-  activeSubscriptions: string[]
-  allPurchasedProductIdentifiers: string[]
-  paymentLinks: YocoPaymentLink[]
+  email: string
+  name: string
+  entitlements: {
+    [key: string]: {
+      expires_date: string | null
+      product_identifier: string
+      purchase_date: string
+    }
+  }
 }
 
 class YocoService {
   private apiKey: string
   private initialized: boolean = false
-  private baseUrl: string = 'https://online.yoco.com/v1'
+  private baseUrl: string = 'https://api.yoco.com/v1'
 
   constructor() {
     this.apiKey = process.env.YOCO_SECRET_KEY || process.env.YOCO_SECRET_KEY_V2 || ''
@@ -72,21 +77,8 @@ class YocoService {
         return
       }
       
-      // Test the API key by making a simple request
-      console.log('Testing Yoco API key...')
-      const testResponse = await fetch(`${this.baseUrl}/checkouts`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-        }
-      })
-      
-      console.log('Yoco API test response:', {
-        status: testResponse.status,
-        statusText: testResponse.statusText,
-        ok: testResponse.ok
-      })
-      
+      // Skip API testing for now since the endpoints don't exist
+      console.log('Yoco service initialized with API key')
       this.initialized = true
     } catch (error) {
       console.error('Failed to initialize Yoco:', error)
@@ -113,257 +105,73 @@ class YocoService {
         return this.getMockProducts()
       }
 
-      // Return the same products as before, but now they'll be handled by Yoco payment links
-      const products = [
-        {
-          id: 'per_hour',
-          title: '⏰ Studio Space',
-          description: 'Pay as you go hourly service',
-          price: 25.00,
-          currency: 'ZAR',
-          period: 'hour' as const,
-          periodCount: 1,
-          category: 'standard' as const,
-          features: ['Wifi', 'Hourly pricing', 'Parking'],
-          isEnabled: true,
-          entitlement: 'standard' as const,
-          icon: '⏰',
-        },
-        {
-          id: 'virtual_wine',
-          title: '🍷 Virtual Wine Experience',
-          description: 'Weekly virtual wine tasting and experience package',
-          price: 5.00,
-          currency: 'ZAR',
-          period: 'day' as const,
-          periodCount: 7,
-          category: 'standard' as const,
-          features: ['Pre order wine', 'Curation of the Cape finest', 'Mix and match', 'In app purchases', 'Wine sommelier on request'],
-          isEnabled: true,
-          entitlement: 'standard' as const,
-          icon: '🍷',
-        },
-        {
-          id: 'per_hour_guest',
-          title: '🚗 Parking',
-          description: 'Parking for 1 hour',
-          price: 25.00,
-          currency: 'ZAR',
-          period: 'hour' as const,
-          periodCount: 1,
-          category: 'standard' as const,
-          features: ['Flexible booking', 'Hourly pricing', 'No commitment'],
-          isEnabled: true,
-          entitlement: 'standard' as const,
-          icon: '⏰',
-        },
-        {
-          id: 'per_hour_luxury',
-          title: '✨ Luxury Hours',
-          description: 'Premium hourly service with VIP treatment',
-          price: 389.00,
-          currency: 'ZAR',
-          period: 'hour' as const,
-          periodCount: 1,
-          category: 'hosted' as const,
-          features: ['Premium service', 'Enhanced amenities', 'Dedicated support', 'VIP treatment'],
-          isEnabled: true,
-          entitlement: 'pro' as const,
-          icon: '✨',
-        },
-        {
-          id: 'three_nights_customer',
-          title: '🌙 Three Night Getaway',
-          description: 'Perfect weekend plus one experience',
-          price: 389.99,
-          currency: 'ZAR',
-          period: 'day' as const,
-          periodCount: 3,
-          category: 'hosted' as const,
-          features: ['Premium accommodation', 'Concierge service', 'Breakfast included', 'Late checkout'],
-          isEnabled: true,
-          entitlement: 'pro' as const,
-          icon: '🌙',
-        },
-        {
-          id: 'weekly_customer',
-          title: '🌍 World Explorer',
-          description: 'Ultimate weekly adventure for explorers',
-          price: 1399.99,
-          currency: 'ZAR',
-          period: 'day' as const,
-          periodCount: 7,
-          category: 'special' as const,
-          features: ['Luxury accommodation', 'Personal concierge', 'Adventure planning', 'Premium transport', 'VIP experiences'],
-          isEnabled: true,
-          entitlement: 'pro' as const,
-          icon: '🌍',
-        },
-        {
-          id: 'week_x2_customer',
-          title: '🏖️ Two Week Paradise',
-          description: 'Perfect for a refreshing getaway',
-          price: 299.99,
-          currency: 'ZAR',
-          period: 'day' as const,
-          periodCount: 14,
-          category: 'standard' as const,
-          features: ['Standard accommodation', 'Basic amenities', 'Free WiFi'],
-          isEnabled: true,
-          entitlement: 'standard' as const,
-          icon: '🏖️',
-        },
-        {
-          id: 'week_x3_customer',
-          title: '🌺 Three Week Adventure',
-          description: 'Extended stay with amazing benefits',
-          price: 399.99,
-          currency: 'ZAR',
-          period: 'day' as const,
-          periodCount: 21,
-          category: 'standard' as const,
-          features: ['Standard accommodation', 'Basic amenities', 'Free WiFi'],
-          isEnabled: true,
-          entitlement: 'standard' as const,
-          icon: '🌺',
-        },
-        {
-          id: 'week_x4_customer',
-          title: '🏝️ Monthly Escape',
-          description: 'Ultimate monthly retreat experience',
-          price: 499.99,
-          currency: 'ZAR',
-          period: 'day' as const,
-          periodCount: 30,
-          category: 'standard' as const,
-          features: ['Wifi', 'Cleaning', 'Security', 'Parking', 'Greeting'],
-          isEnabled: true,
-          entitlement: 'standard' as const,
-          icon: '🏝️',
-        },
-        {
-          id: 'monthly',
-          title: '🏠 Monthly Guest',
-          description: 'Guest monthly package',
-          price: 4990.99,
-          currency: 'ZAR',
-          period: 'day' as const,
-          periodCount: 30,
-          category: 'standard' as const,
-          features: ['Wifi', 'Cleaning', 'Security', 'Parking', 'Greeting'],
-          isEnabled: true,
-          entitlement: 'standard' as const,
-          icon: '🏠',
-        },
-        {
-          id: 'gathering',
-          title: '🎉 Gathering',
-          description: 'Perfect for group events and gatherings',
-          price: 4999.99,
-          currency: 'ZAR',
-          period: 'day' as const,
-          periodCount: 1,
-          category: 'special' as const,
-          features: ['Event space', 'Group amenities', 'Catering support', 'Entertainment setup'],
-          isEnabled: true,
-          entitlement: 'standard' as const,
-          icon: '🎉',
-        },
-        {
-          id: 'gathering_monthly',
-          title: '🏘️ Annual agreement',
-          description: 'Your booking is locked in for the year',
-          price: 5000.00,
-          currency: 'ZAR',
-          period: 'month' as const,
-          periodCount: 1,
-          category: 'special' as const,
-          features: ['Month to month agreement', 'No cancellation fees', 'No minimum stay', 'No lock in period'],
-          isEnabled: true,
-          entitlement: 'pro' as const,
-          icon: '🏘️',
-        },
-        {
-          id: 'weekly',
-          title: '📅 Weekly Pro',
-          description: 'Professional weekly package with premium benefits',
-          price: 599.99,
-          currency: 'ZAR',
-          period: 'week' as const,
-          periodCount: 7,
-          category: 'standard' as const,
-          features: ['Wifi', 'Cleaning', 'Security', 'Parking', 'Privacy'],
-          isEnabled: true,
-          entitlement: 'pro' as const,
-          icon: '📅',
-        },
-        {
-          id: 'hosted7nights',
-          title: '👑 Royal Suite Experience',
-          description: 'The ultimate luxury experience',
-          price: 999.99,
-          currency: 'ZAR',
-          period: 'day' as const,
-          periodCount: 7,
-          category: 'special' as const,
-          features: ['Presidential suite', 'Personal butler', 'Gourmet dining', 'Spa access', 'Private transport'],
-          isEnabled: true,
-          entitlement: 'pro' as const,
-          icon: '👑',
-        },
-        {
-          id: 'hosted3nights',
-          title: '👨‍👩‍👧‍👦 3 Nights for guests',
-          description: 'Perfect for family adventures',
-          price: 449.99,
-          currency: 'ZAR',
-          period: 'day' as const,
-          periodCount: 3,
-          category: 'special' as const,
-          features: ['Baby Cot', 'Kids activities', 'Childcare services', 'Entertainment'],
-          isEnabled: true,
-          entitlement: 'standard' as const,
-          icon: '👨‍👩‍👧‍👦',
-        },
-        {
-          id: 'per_night_customer',
-          title: '💕 Romantic Escape',
-          description: 'Intimate experience for couples',
-          price: 349.99,
-          currency: 'ZAR',
-          period: 'day' as const,
-          periodCount: 1,
-          category: 'special' as const,
-          features: ['All inclusive breakfast & Snacks', 'Hiking tours', 'Driver', 'Butler', 'Wine sommelier'],
-          isEnabled: true,
-          entitlement: 'pro' as const,
-          icon: '💕',
-        },
-        {
-          id: 'per_night_luxury',
-          title: '💼 Business Function',
-          description: 'Executive package for business travelers',
-          price: 500.99,
-          currency: 'ZAR',
-          period: 'day' as const,
-          periodCount: 1,
-          category: 'special' as const,
-          features: ['All inclusive breakfast & Snacks', 'Hiking tours', 'Driver', 'Butler', 'Wine sommelier'],
-          isEnabled: true,
-          entitlement: 'pro' as const,
-          icon: '💼',
-        },
-      ]
-
-      return products
+      // For now, return mock products since the Yoco API endpoints don't exist
+      console.log('Using mock Yoco products (API endpoints not available)')
+      return this.getMockProducts()
     } catch (error) {
-      console.error('Failed to fetch from Yoco API:', error)
+      console.error('Failed to get Yoco products:', error)
       return this.getMockProducts()
     }
   }
 
   private getMockProducts(): YocoProduct[] {
     return [
+      {
+        id: 'per_hour',
+        title: '⏰ Studio Space',
+        description: 'Pay as you go hourly service',
+        price: 25.00,
+        currency: 'ZAR',
+        period: 'hour' as const,
+        periodCount: 1,
+        category: 'standard' as const,
+        features: ['Wifi', 'Hourly pricing', 'Parking'],
+        isEnabled: true,
+        entitlement: 'standard' as const,
+        icon: '⏰',
+      },
+      {
+        id: 'virtual_wine',
+        title: '🍷 Virtual Wine Experience',
+        description: 'Weekly virtual wine tasting and experience package',
+        price: 5.00,
+        currency: 'ZAR',
+        period: 'day' as const,
+        periodCount: 7,
+        category: 'standard' as const,
+        features: ['Pre order wine', 'Curation of the Cape finest', 'Mix and match', 'In app purchases', 'Wine sommelier on request'],
+        isEnabled: true,
+        entitlement: 'standard' as const,
+        icon: '🍷',
+      },
+      {
+        id: 'per_hour_guest',
+        title: '🚗 Parking',
+        description: 'Parking for 1 hour',
+        price: 25.00,
+        currency: 'ZAR',
+        period: 'hour' as const,
+        periodCount: 1,
+        category: 'standard' as const,
+        features: ['Flexible booking', 'Hourly pricing', 'No commitment'],
+        isEnabled: true,
+        entitlement: 'standard' as const,
+        icon: '⏰',
+      },
+      {
+        id: 'per_hour_luxury',
+        title: '✨ Luxury Hours',
+        description: 'Premium hourly service with VIP treatment',
+        price: 50.00,
+        currency: 'ZAR',
+        period: 'hour' as const,
+        periodCount: 1,
+        category: 'special' as const,
+        features: ['VIP treatment', 'Premium amenities', 'Personal concierge'],
+        isEnabled: true,
+        entitlement: 'pro' as const,
+        icon: '✨',
+      },
       {
         id: 'gathering_monthly',
         title: '🏘️ Annual agreement',
@@ -391,42 +199,64 @@ class YocoService {
       }
 
       // Create payment link via Yoco API
+      const requestBody = {
+        customer_reference: customerName,
+        customer_description: product.description,
+        order: {
+          display_name: product.title,
+          name: product.title,
+          currency: product.currency,
+          line_items: [{
+            name: product.title,
+            quantity: '1.00',
+            unit_price: {
+              amount: Math.round(product.price * 100), // Convert to cents
+              currency: product.currency
+            },
+            total_price: {
+              amount: Math.round(product.price * 100), // Convert to cents
+              currency: product.currency
+            },
+            item_type: 'product'
+          }]
+        }
+      }
+
+      console.log('Making Yoco API request to create payment link for product:', {
+        url: `${this.baseUrl}/payment_links`,
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey.substring(0, 10)}...`,
+          'Content-Type': 'application/json',
+        },
+        body: requestBody
+      })
+
       const response = await fetch(`${this.baseUrl}/payment_links`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          customer_reference: customerName,
-          customer_description: product.description,
-          order: {
-            display_name: product.title,
-            name: product.title,
-            currency: product.currency,
-            line_items: [{
-              name: product.title,
-              quantity: '1.00',
-              unit_price: {
-                amount: Math.round(product.price * 100), // Convert to cents
-                currency: product.currency
-              },
-              total_price: {
-                amount: Math.round(product.price * 100), // Convert to cents
-                currency: product.currency
-              },
-              item_type: 'product'
-            }]
-          }
-        })
+        body: JSON.stringify(requestBody)
+      })
+
+      console.log('Yoco API response:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
       })
 
       if (!response.ok) {
-        throw new Error(`Yoco API error: ${response.status} ${response.statusText}`)
+        const errorText = await response.text()
+        console.error('Yoco API error response:', errorText)
+        throw new Error(`Yoco API error: ${response.status} ${response.statusText} - ${errorText}`)
       }
 
       const paymentLink = await response.json()
+      console.log('✅ Yoco payment link created successfully for product:', paymentLink.url)
       return paymentLink
+      
     } catch (error) {
       console.error('Failed to create payment link:', error)
       return this.getMockPaymentLink(product, customerId, customerName)
@@ -462,45 +292,63 @@ class YocoService {
         return this.getMockPaymentLinkFromDatabase(packageData, customerId, customerName, total)
       }
 
-      // For now, let's use a simple approach that creates a payment URL
-      // This is a temporary solution until we can get the proper Yoco API working
-      console.log('⚠️ Using temporary payment URL approach')
-      
-      // Create a simple payment URL that redirects to a payment form
-      const paymentUrl = `https://pay.yoco.com/pay/${packageData.id}?amount=${Math.round(total * 100)}&currency=ZAR&customer=${encodeURIComponent(customerName)}`
-      
-      const paymentLink: YocoPaymentLink = {
-        id: `yoco-${Date.now()}`,
-        url: paymentUrl,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        customer_description: packageData.description || packageData.name,
+      // Create payment link via Yoco API
+      const requestBody = {
         customer_reference: customerName,
+        customer_description: packageData.description || packageData.name,
         order: {
-          id: `order-${Date.now()}`,
           display_name: packageData.name,
           name: packageData.name,
-          status: 'pending',
           currency: 'ZAR',
-          amounts: {
-            gross_amount: { amount: Math.round(total * 100), currency: 'ZAR' },
-            net_amount: { amount: Math.round(total * 100), currency: 'ZAR' },
-            tax_amount: { amount: 0, currency: 'ZAR' },
-            discount_amount: { amount: 0, currency: 'ZAR' },
-            tip_amount: { amount: 0, currency: 'ZAR' }
-          },
           line_items: [{
-            id: `item-${Date.now()}`,
             name: packageData.name,
             quantity: '1.00',
-            unit_price: { amount: Math.round(total * 100), currency: 'ZAR' },
-            total_price: { amount: Math.round(total * 100), currency: 'ZAR' },
+            unit_price: {
+              amount: Math.round(total * 100), // Convert to cents
+              currency: 'ZAR'
+            },
+            total_price: {
+              amount: Math.round(total * 100), // Convert to cents
+              currency: 'ZAR'
+            },
             item_type: 'product'
           }]
         }
       }
-      
-      console.log('✅ Created payment link:', paymentLink.url)
+
+      console.log('Making Yoco API request to create payment link:', {
+        url: `${this.baseUrl}/payment_links`,
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey.substring(0, 10)}...`,
+          'Content-Type': 'application/json',
+        },
+        body: requestBody
+      })
+
+      const response = await fetch(`${this.baseUrl}/payment_links`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
+      })
+
+      console.log('Yoco API response:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Yoco API error response:', errorText)
+        throw new Error(`Yoco API error: ${response.status} ${response.statusText} - ${errorText}`)
+      }
+
+      const paymentLink = await response.json()
+      console.log('✅ Yoco payment link created successfully:', paymentLink.url)
       return paymentLink
       
     } catch (error) {
@@ -613,7 +461,7 @@ class YocoService {
       const paymentLink = await response.json()
       return paymentLink
     } catch (error) {
-      console.error('Failed to fetch payment link:', error)
+      console.error('Failed to get payment link:', error)
       return null
     }
   }
@@ -622,16 +470,16 @@ class YocoService {
     await this.initialize()
     
     try {
-      // Mock customer info for now
-      return {
-        id: customerId,
-        entitlements: {},
-        activeSubscriptions: [],
-        allPurchasedProductIdentifiers: [],
-        paymentLinks: []
+      if (!this.apiKey) {
+        console.warn('Yoco API key not configured, using mock customer info')
+        return null
       }
+
+      // For now, return null since we can't fetch customer info from the API
+      console.log('Customer info fetching not implemented yet')
+      return null
     } catch (error) {
-      console.error('Failed to fetch customer info:', error)
+      console.error('Failed to get customer info:', error)
       return null
     }
   }
@@ -640,40 +488,20 @@ class YocoService {
     await this.initialize()
     
     try {
-      const products = await this.getProducts()
-      const product = products.find(p => p.id === packageId)
-      
-      if (!product) {
-        throw new Error(`Product not found: ${packageId}`)
+      if (!this.apiKey) {
+        console.warn('Yoco API key not configured, using mock payment link')
+        return null
       }
 
-      return await this.createPaymentLink(product, customerId, customerName)
-    } catch (error) {
-      console.error('Purchase failed:', error)
+      // For now, return null since we can't purchase packages from the API
+      console.log('Package purchasing not implemented yet')
       return null
-    }
-  }
-
-  async validateSubscription(userId: string, productId: string): Promise<boolean> {
-    await this.initialize()
-    
-    try {
-      const customerInfo = await this.getCustomerInfo(userId)
-      
-      if (!customerInfo) {
-        console.log(`No customer info found for user: ${userId}`)
-        return false
-      }
-
-      const hasProduct = customerInfo.allPurchasedProductIdentifiers.includes(productId)
-      
-      console.log(`Validating subscription for user ${userId}, product ${productId}: ${hasProduct}`)
-      return true // Mock: always return true for testing
     } catch (error) {
-      console.error('Failed to validate subscription:', error)
-      return false
+      console.error('Failed to purchase package:', error)
+      return null
     }
   }
 }
 
 export const yocoService = new YocoService()
+export default yocoService
