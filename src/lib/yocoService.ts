@@ -58,7 +58,7 @@ class YocoService {
   private baseUrl: string = 'https://api.yoco.com/v1'
 
   constructor() {
-    this.apiKey = process.env.YOCO_SECRET_KEY || ''
+    this.apiKey = process.env.YOCO_SECRET_KEY || process.env.YOCO_SECRET_KEY_V2 || ''
   }
 
   async initialize() {
