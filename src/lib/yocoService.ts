@@ -59,6 +59,7 @@ class YocoService {
 
   constructor() {
     this.apiKey = process.env.YOCO_SECRET_KEY || process.env.YOCO_SECRET_KEY_V2 || ''
+    console.log('Yoco API Key loaded:', this.apiKey ? 'Yes' : 'No', this.apiKey ? `(${this.apiKey.substring(0, 10)}...)` : '')
   }
 
   async initialize() {
@@ -417,6 +418,70 @@ class YocoService {
     }
   }
 
+  // New method to create payment link from database package
+  async createPaymentLinkFromDatabasePackage(
+    packageData: {
+      id: string
+      name: string
+      description?: string
+      baseRate?: number
+      revenueCatId?: string
+    },
+    customerId: string,
+    customerName: string,
+    total: number
+  ): Promise<YocoPaymentLink | null> {
+    await this.initialize()
+    
+    try {
+      if (!this.apiKey) {
+        console.warn('Yoco API key not configured, using mock payment link')
+        return this.getMockPaymentLinkFromDatabase(packageData, customerId, customerName, total)
+      }
+
+      // Create payment link via Yoco API
+      const response = await fetch(`${this.baseUrl}/payment_links`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          customer_reference: customerName,
+          customer_description: packageData.description || packageData.name,
+          order: {
+            display_name: packageData.name,
+            name: packageData.name,
+            currency: 'ZAR',
+            line_items: [{
+              name: packageData.name,
+              quantity: '1.00',
+              unit_price: {
+                amount: Math.round(total * 100), // Convert to cents
+                currency: 'ZAR'
+              },
+              total_price: {
+                amount: Math.round(total * 100), // Convert to cents
+                currency: 'ZAR'
+              },
+              item_type: 'product'
+            }]
+          }
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`Yoco API error: ${response.status} ${response.statusText}`)
+      }
+
+      const paymentLink = await response.json()
+      return paymentLink
+    } catch (error) {
+      console.error('Failed to create payment link:', error)
+      return this.getMockPaymentLinkFromDatabase(packageData, customerId, customerName, total)
+    }
+  }
+
   private getMockPaymentLink(product: YocoProduct, customerId: string, customerName: string): YocoPaymentLink {
     return {
       id: `mock-${Date.now()}`,
@@ -444,6 +509,50 @@ class YocoService {
           quantity: '1.00',
           unit_price: { amount: Math.round(product.price * 100), currency: product.currency },
           total_price: { amount: Math.round(product.price * 100), currency: product.currency },
+          item_type: 'product'
+        }]
+      }
+    }
+  }
+
+  private getMockPaymentLinkFromDatabase(
+    packageData: {
+      id: string
+      name: string
+      description?: string
+      baseRate?: number
+      revenueCatId?: string
+    },
+    customerId: string,
+    customerName: string,
+    total: number
+  ): YocoPaymentLink {
+    return {
+      id: `mock-${Date.now()}`,
+      url: `https://pay.yoco.com/r/mock-${packageData.id}`,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      customer_description: packageData.description || packageData.name,
+      customer_reference: customerName,
+      order: {
+        id: `order-${Date.now()}`,
+        display_name: packageData.name,
+        name: packageData.name,
+        status: 'pending',
+        currency: 'ZAR',
+        amounts: {
+          gross_amount: { amount: Math.round(total * 100), currency: 'ZAR' },
+          net_amount: { amount: Math.round(total * 100), currency: 'ZAR' },
+          tax_amount: { amount: 0, currency: 'ZAR' },
+          discount_amount: { amount: 0, currency: 'ZAR' },
+          tip_amount: { amount: 0, currency: 'ZAR' }
+        },
+        line_items: [{
+          id: `item-${Date.now()}`,
+          name: packageData.name,
+          quantity: '1.00',
+          unit_price: { amount: Math.round(total * 100), currency: 'ZAR' },
+          total_price: { amount: Math.round(total * 100), currency: 'ZAR' },
           item_type: 'product'
         }]
       }

@@ -15,6 +15,7 @@ type YocoContextType = {
   refreshCustomerInfo: () => Promise<CustomerInfo | null | void>
   restorePurchases: () => Promise<CustomerInfo | null | void>
   createPaymentLink: (productId: string, customerName: string) => Promise<YocoPaymentLink | null>
+  createPaymentLinkFromDatabase?: (packageData: any, customerName: string, total: number) => Promise<YocoPaymentLink | null>
 }
 
 const YocoContext = createContext<YocoContextType | undefined>(undefined)
@@ -122,6 +123,26 @@ export const YocoProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
+  const createPaymentLinkFromDatabase = async (packageData: any, customerName: string, total: number): Promise<YocoPaymentLink | null> => {
+    if (!currentUser?.id) {
+      console.error('No user ID available for payment link creation')
+      return null
+    }
+
+    try {
+      return await yocoService.createPaymentLinkFromDatabasePackage(
+        packageData,
+        String(currentUser.id),
+        customerName,
+        total
+      )
+    } catch (err) {
+      console.error('Failed to create payment link from database package:', err)
+      setError(err instanceof Error ? err : new Error('Failed to create payment link'))
+      return null
+    }
+  }
+
   return (
     <YocoContext.Provider
       value={{
@@ -132,6 +153,7 @@ export const YocoProvider: React.FC<{ children: React.ReactNode }> = ({ children
         refreshCustomerInfo,
         restorePurchases,
         createPaymentLink,
+        createPaymentLinkFromDatabase,
       }}
     >
       {children}

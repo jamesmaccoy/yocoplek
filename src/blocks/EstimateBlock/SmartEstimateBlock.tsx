@@ -744,6 +744,35 @@ export const SmartEstimateBlock: React.FC<SmartEstimateBlockProps> = ({
           console.error('Yoco Payment Link Error:', paymentError)
           throw new Error('Payment link creation failed. Please try again.')
         }
+      } else if (selectedPackage.source === 'database') {
+        // Handle database packages directly
+        try {
+          console.log('Creating payment link for database package:', selectedPackage)
+          
+          const paymentLink = await yocoService.createPaymentLinkFromDatabasePackage(
+            {
+              id: selectedPackage.id,
+              name: selectedPackage.name,
+              description: selectedPackage.description,
+              baseRate: selectedPackage.baseRate,
+              revenueCatId: selectedPackage.yocoId
+            },
+            String(currentUser.id),
+            currentUser.name || currentUser.email || 'Customer',
+            total
+          )
+          
+          if (!paymentLink) {
+            throw new Error('Failed to create payment link')
+          }
+          
+          // Redirect to Yoco payment page
+          window.location.href = paymentLink.url
+          
+        } catch (paymentError: any) {
+          console.error('Yoco Payment Link Error for database package:', paymentError)
+          throw new Error('Payment link creation failed. Please try again.')
+        }
       } else {
         // Fallback: simulate payment success and confirm estimate first
         console.log('❌ Package not found in Yoco products, using fallback payment flow')
