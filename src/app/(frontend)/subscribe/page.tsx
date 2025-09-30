@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState } from 'react'
 import { useUserContext } from '@/context/UserContext'
-import { useRevenueCat } from '@/providers/RevenueCat'
+import { useYoco } from '@/providers/RevenueCat'
 import { useSubscription } from '@/hooks/useSubscription'
-import { Purchases, Package, PurchasesError, ErrorCode, Offering } from '@revenuecat/purchases-js'
+import { yocoService, YocoProduct } from '@/lib/yocoService'
 import { useRouter } from 'next/navigation'
 import { getZARPriceFromRevenueCatProduct, getDualCurrencyPrice } from '@/lib/currency'
 import { Switch } from '@/components/ui/switch'
@@ -13,9 +13,9 @@ import { Label } from '@/components/ui/label'
 export default function SubscribePage() {
   const router = useRouter()
   const { currentUser } = useUserContext()
-  const { customerInfo, isInitialized } = useRevenueCat()
+  const { customerInfo, isInitialized } = useYoco()
   const { isSubscribed, isLoading } = useSubscription()
-  const [offerings, setOfferings] = useState<Offering[]>([])
+  const [offerings, setOfferings] = useState<YocoProduct[]>([])
   const [loadingOfferings, setLoadingOfferings] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showProEntitlements, setShowProEntitlements] = useState(false)
