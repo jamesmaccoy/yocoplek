@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { Estimate, User } from '@/payload-types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useRevenueCat } from '@/providers/RevenueCat'
-import { Purchases, type Package, ErrorCode, type Product } from '@revenuecat/purchases-js'
+import { useYoco } from '@/providers/RevenueCat'
+import { yocoService, YocoProduct, YocoPaymentLink } from '@/lib/yocoService'
 import { useRouter } from 'next/navigation'
 import { FileText, Loader2, PlusCircleIcon, TrashIcon } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
@@ -47,10 +47,10 @@ export interface PostPackage {
   category: string
   minNights: number
   maxNights: number
-  revenueCatId?: string
+  yocoId?: string
   baseRate?: number // Package-specific base rate
   isEnabled: boolean
-  source?: 'database' | 'revenuecat'
+  source?: 'database' | 'yoco'
   hasCustomName?: boolean // Indicates if this package has a custom name set by host
 }
 
@@ -117,7 +117,7 @@ type Props = {
 
 export default function EstimateDetailsClientPage({ data, user }: Props) {
   const router = useRouter()
-  const { isInitialized } = useRevenueCat()
+  const { isInitialized } = useYoco()
 
   // Helper function to get display name from either package type
   const getPackageDisplayName = (pkg: PostPackage | null): string => {
@@ -158,7 +158,7 @@ export default function EstimateDetailsClientPage({ data, user }: Props) {
   // Payment states
   const [paymentLoading, setPaymentLoading] = useState(false)
   const [paymentError, setPaymentError] = useState<string | null>(null)
-  const [offerings, setOfferings] = useState<Package[]>([])
+  const [offerings, setOfferings] = useState<YocoProduct[]>([])
   const [loadingOfferings, setLoadingOfferings] = useState(true)
   const [paymentSuccess, setPaymentSuccess] = useState(false)
 

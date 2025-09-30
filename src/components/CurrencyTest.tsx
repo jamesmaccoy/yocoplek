@@ -1,8 +1,8 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { useRevenueCat } from '@/providers/RevenueCat'
-import { Purchases, Package } from '@revenuecat/purchases-js'
+import { useYoco } from '@/providers/RevenueCat'
+import { yocoService, YocoProduct } from '@/lib/yocoService'
 import { 
   getZARPriceFromRevenueCatProduct, 
   getDualCurrencyPrice, 
@@ -12,8 +12,8 @@ import {
 } from '@/lib/currency'
 
 export const CurrencyTest: React.FC = () => {
-  const { isInitialized } = useRevenueCat()
-  const [packages, setPackages] = useState<Package[]>([])
+  const { isInitialized } = useYoco()
+  const [packages, setPackages] = useState<YocoProduct[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -25,18 +25,8 @@ export const CurrencyTest: React.FC = () => {
   const loadPackages = async () => {
     try {
       setLoading(true)
-      const purchases = await Purchases.getSharedInstance()
-      const offerings = await purchases.getOfferings()
-      
-      // Collect all packages from all offerings
-      const allPackages: Package[] = []
-      Object.values(offerings.all).forEach(offering => {
-        if (offering && offering.availablePackages.length > 0) {
-          allPackages.push(...offering.availablePackages)
-        }
-      })
-      
-      setPackages(allPackages)
+      const products = await yocoService.getProducts()
+      setPackages(products)
     } catch (error) {
       console.error('Error loading packages:', error)
     } finally {
@@ -45,7 +35,7 @@ export const CurrencyTest: React.FC = () => {
   }
 
   if (!isInitialized) {
-    return <div className="p-4">RevenueCat not initialized</div>
+    return <div className="p-4">Yoco not initialized</div>
   }
 
   if (loading) {

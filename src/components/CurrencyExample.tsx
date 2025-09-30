@@ -1,14 +1,14 @@
 'use client'
 
 import React from 'react'
-import { Package } from '@revenuecat/purchases-js'
+import { YocoProduct } from '@/lib/yocoService'
 import { 
   getZARPriceFromRevenueCatProduct, 
   getDualCurrencyPrice 
 } from '@/lib/currency'
 
 interface CurrencyExampleProps {
-  package: Package
+  package: YocoProduct
 }
 
 export const CurrencyExample: React.FC<CurrencyExampleProps> = ({ package: pkg }) => {
