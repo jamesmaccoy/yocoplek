@@ -730,12 +730,25 @@ export const SmartEstimateBlock: React.FC<SmartEstimateBlockProps> = ({
       
       if (yocoProduct) {
         try {
-          // Create Yoco payment link
-          const paymentLink = await yocoService.createPaymentLink(
-            yocoProduct,
-            String(currentUser.id),
-            currentUser.name || currentUser.email || 'Customer'
-          )
+          // Create Yoco payment link via API
+          const response = await fetch('/api/yoco/payment-links', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              productId: yocoProduct.id,
+              customerId: String(currentUser.id),
+              customerName: currentUser.name || currentUser.email || 'Customer'
+            })
+          })
+          
+          if (!response.ok) {
+            throw new Error(`Failed to create payment link: ${response.status}`)
+          }
+          
+          const data = await response.json()
+          const paymentLink = data.paymentLink
           
           if (!paymentLink) {
             throw new Error('Failed to create payment link')
@@ -753,18 +766,31 @@ export const SmartEstimateBlock: React.FC<SmartEstimateBlockProps> = ({
         try {
           console.log('Creating payment link for database package:', selectedPackage)
           
-          const paymentLink = await yocoService.createPaymentLinkFromDatabasePackage(
-            {
-              id: selectedPackage.id,
-              name: selectedPackage.name,
-              description: selectedPackage.description,
-              baseRate: selectedPackage.baseRate,
-              revenueCatId: selectedPackage.yocoId
+          const response = await fetch('/api/yoco/payment-links', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
             },
-            String(currentUser.id),
-            currentUser.name || currentUser.email || 'Customer',
-            total
-          )
+            body: JSON.stringify({
+              packageData: {
+                id: selectedPackage.id,
+                name: selectedPackage.name,
+                description: selectedPackage.description,
+                baseRate: selectedPackage.baseRate,
+                revenueCatId: selectedPackage.yocoId
+              },
+              customerId: String(currentUser.id),
+              customerName: currentUser.name || currentUser.email || 'Customer',
+              total: total
+            })
+          })
+          
+          if (!response.ok) {
+            throw new Error(`Failed to create payment link: ${response.status}`)
+          }
+          
+          const data = await response.json()
+          const paymentLink = data.paymentLink
           
           if (!paymentLink) {
             throw new Error('Failed to create payment link')
