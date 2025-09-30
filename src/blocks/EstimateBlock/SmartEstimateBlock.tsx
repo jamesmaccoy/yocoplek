@@ -608,8 +608,12 @@ export const SmartEstimateBlock: React.FC<SmartEstimateBlockProps> = ({
 
   const loadYocoProducts = async () => {
     try {
-      const products = await yocoService.getProducts()
-      setOfferings(products)
+      const response = await fetch('/api/yoco/products')
+      if (!response.ok) {
+        throw new Error(`Failed to fetch products: ${response.status}`)
+      }
+      const data = await response.json()
+      setOfferings(data.products)
     } catch (err) {
       console.error('Error loading Yoco products:', err)
     }
