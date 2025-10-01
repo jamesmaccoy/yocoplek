@@ -226,7 +226,7 @@ class YocoService {
         url: `${this.baseUrl}/payment_links`,
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.apiKey.substring(0, 10)}...`,
+          'X-Auth-Secret-Key': `${this.apiKey.substring(0, 10)}...`,
           'Content-Type': 'application/json',
         },
         body: requestBody
@@ -235,7 +235,7 @@ class YocoService {
       const response = await fetch(`${this.baseUrl}/payment_links`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
+          'X-Auth-Secret-Key': this.apiKey,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestBody)
@@ -320,7 +320,7 @@ class YocoService {
         url: `${this.baseUrl}/payment_links`,
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.apiKey.substring(0, 10)}...`,
+          'X-Auth-Secret-Key': `${this.apiKey.substring(0, 10)}...`,
           'Content-Type': 'application/json',
         },
         body: requestBody
@@ -329,7 +329,7 @@ class YocoService {
       const response = await fetch(`${this.baseUrl}/payment_links`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
+          'X-Auth-Secret-Key': this.apiKey,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestBody)
@@ -450,7 +450,7 @@ class YocoService {
 
       const response = await fetch(`${this.baseUrl}/payment_links/${paymentLinkId}`, {
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
+          'X-Auth-Secret-Key': this.apiKey,
         }
       })
 
