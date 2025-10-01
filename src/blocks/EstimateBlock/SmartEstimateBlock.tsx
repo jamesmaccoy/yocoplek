@@ -739,7 +739,8 @@ export const SmartEstimateBlock: React.FC<SmartEstimateBlockProps> = ({
             body: JSON.stringify({
               productId: yocoProduct.id,
               customerId: String(currentUser.id),
-              customerName: currentUser.name || currentUser.email || 'Customer'
+              customerName: currentUser.name || currentUser.email || 'Customer',
+              version: 'V2' // Use V2 API keys
             })
           })
           
@@ -781,7 +782,8 @@ export const SmartEstimateBlock: React.FC<SmartEstimateBlockProps> = ({
               },
               customerId: String(currentUser.id),
               customerName: currentUser.name || currentUser.email || 'Customer',
-              total: total
+              total: total,
+              version: 'V2' // Use V2 API keys
             })
           })
           

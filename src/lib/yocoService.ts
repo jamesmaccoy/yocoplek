@@ -60,11 +60,18 @@ export interface YocoCustomer {
 class YocoService {
   private apiKey: string
   private initialized: boolean = false
-  private baseUrl: string = 'https://api.yoco.com/v1'
+  private baseUrl: string = 'https://online.yoco.com/v1'
 
   constructor() {
-    this.apiKey = process.env.YOCO_SECRET_KEY || process.env.YOCO_SECRET_KEY_V2 || ''
+    this.apiKey = process.env.YOCO_SECRET_KEY || ''
     console.log('Yoco API Key loaded:', this.apiKey ? 'Yes' : 'No', this.apiKey ? `(${this.apiKey.substring(0, 10)}...)` : '')
+  }
+
+  private getApiKey(version?: string): string {
+    if (version === 'V2') {
+      return process.env.YOCO_SECRET_KEY_V2 || this.apiKey
+    }
+    return this.apiKey
   }
 
   async initialize() {
@@ -189,11 +196,14 @@ class YocoService {
     ]
   }
 
-  async createPaymentLink(product: YocoProduct, customerId: string, customerName: string): Promise<YocoPaymentLink | null> {
+  async createPaymentLink(product: YocoProduct, customerId: string, customerName: string, version?: string): Promise<YocoPaymentLink | null> {
     await this.initialize()
     
+    const apiKey = this.getApiKey(version)
+    console.log(`Using Yoco API key version: ${version || 'default'}`)
+    
     try {
-      if (!this.apiKey) {
+      if (!apiKey) {
         console.warn('Yoco API key not configured, using mock payment link')
         return this.getMockPaymentLink(product, customerId, customerName)
       }
@@ -223,19 +233,19 @@ class YocoService {
       }
 
       console.log('Making Yoco API request to create payment link for product:', {
-        url: `${this.baseUrl}/payment_links`,
+        url: `${this.baseUrl}/checkouts`,
         method: 'POST',
         headers: {
-          'X-Auth-Secret-Key': `${this.apiKey.substring(0, 10)}...`,
+          'X-Auth-Secret-Key': `${apiKey.substring(0, 10)}...`,
           'Content-Type': 'application/json',
         },
         body: requestBody
       })
 
-      const response = await fetch(`${this.baseUrl}/payment_links`, {
+      const response = await fetch(`${this.baseUrl}/checkouts`, {
         method: 'POST',
         headers: {
-          'X-Auth-Secret-Key': this.apiKey,
+          'X-Auth-Secret-Key': apiKey,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestBody)
@@ -274,20 +284,24 @@ class YocoService {
     },
     customerId: string,
     customerName: string,
-    total: number
+    total: number,
+    version?: string
   ): Promise<YocoPaymentLink | null> {
     await this.initialize()
+    
+    const apiKey = this.getApiKey(version)
+    console.log(`Using Yoco API key version: ${version || 'default'}`)
     
     console.log('Creating payment link for database package:', {
       packageData,
       customerId,
       customerName,
       total,
-      apiKey: this.apiKey ? 'Present' : 'Missing'
+      apiKey: apiKey ? 'Present' : 'Missing'
     })
     
     try {
-      if (!this.apiKey) {
+      if (!apiKey) {
         console.warn('Yoco API key not configured, using mock payment link')
         return this.getMockPaymentLinkFromDatabase(packageData, customerId, customerName, total)
       }
@@ -317,19 +331,19 @@ class YocoService {
       }
 
       console.log('Making Yoco API request to create payment link:', {
-        url: `${this.baseUrl}/payment_links`,
+        url: `${this.baseUrl}/checkouts`,
         method: 'POST',
         headers: {
-          'X-Auth-Secret-Key': `${this.apiKey.substring(0, 10)}...`,
+          'X-Auth-Secret-Key': `${apiKey.substring(0, 10)}...`,
           'Content-Type': 'application/json',
         },
         body: requestBody
       })
 
-      const response = await fetch(`${this.baseUrl}/payment_links`, {
+      const response = await fetch(`${this.baseUrl}/checkouts`, {
         method: 'POST',
         headers: {
-          'X-Auth-Secret-Key': this.apiKey,
+          'X-Auth-Secret-Key': apiKey,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestBody)
@@ -448,7 +462,7 @@ class YocoService {
         return null
       }
 
-      const response = await fetch(`${this.baseUrl}/payment_links/${paymentLinkId}`, {
+      const response = await fetch(`${this.baseUrl}/checkouts/${paymentLinkId}`, {
         headers: {
           'X-Auth-Secret-Key': this.apiKey,
         }
