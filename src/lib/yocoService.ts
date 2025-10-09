@@ -60,7 +60,7 @@ export interface YocoCustomer {
 class YocoService {
   private apiKey: string
   private initialized: boolean = false
-  private baseUrl: string = 'https://api.yoco.com/v1'
+  private baseUrl: string = 'https://online.yoco.com/v1'
 
   constructor() {
     this.apiKey = process.env.YOCO_SECRET_KEY || ''
@@ -208,15 +208,18 @@ class YocoService {
         return this.getMockPaymentLink(product, customerId, customerName)
       }
 
-      // Create payment link via Yoco API
-      // Using the simpler format as per Yoco documentation
+      // Create checkout via Yoco Checkout API
       const requestBody = {
-        amount: {
-          amount: Math.round(product.price * 100), // Convert to cents
-          currency: product.currency
-        },
-        customer_description: product.description,
-        customer_reference: customerName
+        amount: Math.round(product.price * 100), // Amount in cents
+        currency: product.currency,
+        successUrl: `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/booking-confirmation?success=true`,
+        cancelUrl: `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/estimate?cancelled=true`,
+        metadata: {
+          productId: product.id,
+          productName: product.title,
+          customerId: customerId,
+          customerName: customerName
+        }
       }
 
       console.log('Making Yoco API request to create payment link for product:', {
@@ -250,8 +253,41 @@ class YocoService {
         throw new Error(`Yoco API error: ${response.status} ${response.statusText} - ${errorText}`)
       }
 
-      const paymentLink = await response.json()
-      console.log('✅ Yoco payment link created successfully for product:', paymentLink.url)
+      const checkout = await response.json()
+      console.log('✅ Yoco checkout created successfully for product:', checkout)
+      
+      // Transform checkout response to payment link format
+      const paymentLink: YocoPaymentLink = {
+        id: checkout.id,
+        url: checkout.redirectUrl || checkout.url || `https://pay.yoco.com/checkout/${checkout.id}`,
+        created_at: checkout.createdDate || new Date().toISOString(),
+        updated_at: checkout.updatedDate || new Date().toISOString(),
+        customer_description: product.description,
+        customer_reference: customerName,
+        order: {
+          id: checkout.id,
+          display_name: product.title,
+          name: product.title,
+          status: checkout.status || 'pending',
+          currency: product.currency,
+          amounts: {
+            gross_amount: { amount: Math.round(product.price * 100), currency: product.currency },
+            net_amount: { amount: Math.round(product.price * 100), currency: product.currency },
+            tax_amount: { amount: 0, currency: product.currency },
+            discount_amount: { amount: 0, currency: product.currency },
+            tip_amount: { amount: 0, currency: product.currency }
+          },
+          line_items: [{
+            id: `item-${Date.now()}`,
+            name: product.title,
+            quantity: '1.00',
+            unit_price: { amount: Math.round(product.price * 100), currency: product.currency },
+            total_price: { amount: Math.round(product.price * 100), currency: product.currency },
+            item_type: 'product'
+          }]
+        }
+      }
+      
       return paymentLink
       
     } catch (error) {
@@ -293,15 +329,19 @@ class YocoService {
         return this.getMockPaymentLinkFromDatabase(packageData, customerId, customerName, total)
       }
 
-      // Create payment link via Yoco API
-      // Using the simpler format as per Yoco documentation
+      // Create checkout via Yoco Checkout API
+      // Note: The Checkout API creates a checkout session, not a direct payment link
       const requestBody = {
-        amount: {
-          amount: Math.round(total * 100), // Convert to cents
-          currency: 'ZAR'
-        },
-        customer_description: packageData.description || packageData.name,
-        customer_reference: customerName
+        amount: Math.round(total * 100), // Amount in cents
+        currency: 'ZAR',
+        successUrl: `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/booking-confirmation?success=true`,
+        cancelUrl: `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/estimate?cancelled=true`,
+        metadata: {
+          packageId: packageData.id,
+          packageName: packageData.name,
+          customerId: customerId,
+          customerName: customerName
+        }
       }
 
       console.log('Making Yoco API request to create payment link:', {
@@ -335,8 +375,41 @@ class YocoService {
         throw new Error(`Yoco API error: ${response.status} ${response.statusText} - ${errorText}`)
       }
 
-      const paymentLink = await response.json()
-      console.log('✅ Yoco payment link created successfully:', paymentLink.url)
+      const checkout = await response.json()
+      console.log('✅ Yoco checkout created successfully:', checkout)
+      
+      // Transform checkout response to payment link format
+      const paymentLink: YocoPaymentLink = {
+        id: checkout.id,
+        url: checkout.redirectUrl || checkout.url || `https://pay.yoco.com/checkout/${checkout.id}`,
+        created_at: checkout.createdDate || new Date().toISOString(),
+        updated_at: checkout.updatedDate || new Date().toISOString(),
+        customer_description: packageData.description || packageData.name,
+        customer_reference: customerName,
+        order: {
+          id: checkout.id,
+          display_name: packageData.name,
+          name: packageData.name,
+          status: checkout.status || 'pending',
+          currency: 'ZAR',
+          amounts: {
+            gross_amount: { amount: Math.round(total * 100), currency: 'ZAR' },
+            net_amount: { amount: Math.round(total * 100), currency: 'ZAR' },
+            tax_amount: { amount: 0, currency: 'ZAR' },
+            discount_amount: { amount: 0, currency: 'ZAR' },
+            tip_amount: { amount: 0, currency: 'ZAR' }
+          },
+          line_items: [{
+            id: `item-${Date.now()}`,
+            name: packageData.name,
+            quantity: '1.00',
+            unit_price: { amount: Math.round(total * 100), currency: 'ZAR' },
+            total_price: { amount: Math.round(total * 100), currency: 'ZAR' },
+            item_type: 'product'
+          }]
+        }
+      }
+      
       return paymentLink
       
     } catch (error) {
