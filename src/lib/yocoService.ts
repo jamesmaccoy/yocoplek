@@ -60,7 +60,7 @@ export interface YocoCustomer {
 class YocoService {
   private apiKey: string
   private initialized: boolean = false
-  private baseUrl: string = 'https://online.yoco.com/v1'
+  private baseUrl: string = 'https://api.yoco.com/v1'
 
   constructor() {
     this.apiKey = process.env.YOCO_SECRET_KEY || ''
@@ -209,34 +209,21 @@ class YocoService {
       }
 
       // Create payment link via Yoco API
+      // Using the simpler format as per Yoco documentation
       const requestBody = {
-        customer_reference: customerName,
+        amount: {
+          amount: Math.round(product.price * 100), // Convert to cents
+          currency: product.currency
+        },
         customer_description: product.description,
-        order: {
-          display_name: product.title,
-          name: product.title,
-          currency: product.currency,
-          line_items: [{
-            name: product.title,
-            quantity: '1.00',
-            unit_price: {
-              amount: Math.round(product.price * 100), // Convert to cents
-              currency: product.currency
-            },
-            total_price: {
-              amount: Math.round(product.price * 100), // Convert to cents
-              currency: product.currency
-            },
-            item_type: 'product'
-          }]
-        }
+        customer_reference: customerName
       }
 
       console.log('Making Yoco API request to create payment link for product:', {
         url: `${this.baseUrl}/checkouts`,
         method: 'POST',
         headers: {
-          'X-Auth-Secret-Key': `${apiKey.substring(0, 10)}...`,
+          'Authorization': `Bearer ${apiKey.substring(0, 10)}...`,
           'Content-Type': 'application/json',
         },
         body: requestBody
@@ -307,34 +294,21 @@ class YocoService {
       }
 
       // Create payment link via Yoco API
+      // Using the simpler format as per Yoco documentation
       const requestBody = {
-        customer_reference: customerName,
+        amount: {
+          amount: Math.round(total * 100), // Convert to cents
+          currency: 'ZAR'
+        },
         customer_description: packageData.description || packageData.name,
-        order: {
-          display_name: packageData.name,
-          name: packageData.name,
-          currency: 'ZAR',
-          line_items: [{
-            name: packageData.name,
-            quantity: '1.00',
-            unit_price: {
-              amount: Math.round(total * 100), // Convert to cents
-              currency: 'ZAR'
-            },
-            total_price: {
-              amount: Math.round(total * 100), // Convert to cents
-              currency: 'ZAR'
-            },
-            item_type: 'product'
-          }]
-        }
+        customer_reference: customerName
       }
 
       console.log('Making Yoco API request to create payment link:', {
         url: `${this.baseUrl}/checkouts`,
         method: 'POST',
         headers: {
-          'X-Auth-Secret-Key': `${apiKey.substring(0, 10)}...`,
+          'Authorization': `Bearer ${apiKey.substring(0, 10)}...`,
           'Content-Type': 'application/json',
         },
         body: requestBody
@@ -464,7 +438,7 @@ class YocoService {
 
       const response = await fetch(`${this.baseUrl}/checkouts/${paymentLinkId}`, {
         headers: {
-          'X-Auth-Secret-Key': this.apiKey,
+          'Authorization': `Bearer ${this.apiKey}`,
         }
       })
 

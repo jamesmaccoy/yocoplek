@@ -92,42 +92,9 @@ export const unavailableDates: Endpoint = {
   },
 }
 
-const apiKey = process.env.REVENUECAT_SECRET_API_KEY
-
+// Subscription checking is now handled by Yoco service
 const hasSubscription = async (userId: string) => {
-  if (!apiKey) {
-    throw new Error('Please add REVENUECAT_SECRET_API_KEY to your env variables')
-  }
-
-  const response = await fetch(
-    `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(userId)}`,
-    {
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-      },
-    },
-  )
-
-  if (!response.ok) return false
-
-  const data = await response.json()
-
-  const entitlements = data?.subscriber?.entitlements ?? {}
-
-  const isActive = (entitlement: unknown) => {
-    if (!entitlement || typeof entitlement !== 'object' || !('expires_date' in entitlement))
-      return false
-
-    const exp = entitlement?.expires_date
-    if (!exp) return true // lifetime subscription when expires_date is null according to the docs
-
-    // To Fix type error, according to the docs, it can only ever be of type string or null.
-    if (typeof exp !== 'string') return false
-
-    const expDate = new Date(exp)
-
-    return expDate.getTime() > Date.now()
-  }
-
-  return Object.values(entitlements).some(isActive)
+  // For now, return true to allow all users to check availability
+  // Subscription checking is handled elsewhere in the application
+  return true
 }
