@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { useYoco } from '@/providers/RevenueCat'
+import { useYoco } from '@/providers/Yoco'
 import { yocoService, YocoProduct } from '@/lib/yocoService'
 import { 
   getZARPriceFromRevenueCatProduct, 

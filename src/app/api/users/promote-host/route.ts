@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import configPromise from '@/payload.config'
-import { revenueCatService } from '@/lib/revenueCatService'
+import { yocoService } from '@/lib/yocoService'
 
 export async function POST(request: NextRequest) {
   try {
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
 
     // Validate payment if productId is provided
     if (productId) {
-      const hasValidSubscription = await revenueCatService.validateSubscription(
+      const hasValidSubscription = await yocoService.validateSubscription(
         targetUser.id,
         productId
       )

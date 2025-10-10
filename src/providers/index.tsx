@@ -3,7 +3,7 @@ import React from 'react'
 import { HeaderThemeProvider } from './HeaderTheme'
 import { ThemeProvider } from './Theme'
 import { UserProvider } from '@/context/UserContext'
-import { RevenueCatProvider } from './RevenueCat'
+import { YocoProvider } from './Yoco'
 
 export const Providers: React.FC<{
   children: React.ReactNode
@@ -12,9 +12,9 @@ export const Providers: React.FC<{
     <ThemeProvider>
       <HeaderThemeProvider>
         <UserProvider>
-          <RevenueCatProvider>
+          <YocoProvider>
             {children}
-          </RevenueCatProvider>
+          </YocoProvider>
         </UserProvider>
       </HeaderThemeProvider>
     </ThemeProvider>

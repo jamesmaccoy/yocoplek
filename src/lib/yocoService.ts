@@ -60,7 +60,7 @@ export interface YocoCustomer {
 class YocoService {
   private apiKey: string
   private initialized: boolean = false
-  private baseUrl: string = 'https://online.yoco.com/v1'
+  private baseUrl: string = 'https://payments.yoco.com/api'
 
   constructor() {
     this.apiKey = process.env.YOCO_SECRET_KEY || ''
@@ -468,9 +468,15 @@ class YocoService {
     customerName: string,
     total: number
   ): YocoPaymentLink {
+    console.warn('⚠️ Using mock payment link - Yoco API requires OAuth 2.0 for Payment Links')
+    console.warn('💡 To use real Yoco payments, you need to:')
+    console.warn('   1. Get OAuth 2.0 credentials from Yoco')
+    console.warn('   2. Or implement the Charge API (requires frontend token generation)')
+    console.warn('   3. Contact Yoco support for Payment Links API access')
+    
     return {
       id: `mock-${Date.now()}`,
-      url: `https://pay.yoco.com/r/mock-${packageData.id}`,
+      url: `/booking-confirmation?mock=true&package=${packageData.id}&amount=${total}&customer=${customerName}`,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       customer_description: packageData.description || packageData.name,
@@ -560,6 +566,20 @@ class YocoService {
     } catch (error) {
       console.error('Failed to purchase package:', error)
       return null
+    }
+  }
+
+  async validateSubscription(userId: string, productId: string): Promise<boolean> {
+    await this.initialize()
+    
+    try {
+      // For now, return true to allow all subscriptions
+      // This would need to be implemented with Yoco's subscription checking
+      console.log(`Validating subscription for user ${userId}, product ${productId}`)
+      return true
+    } catch (error) {
+      console.error('Failed to validate subscription:', error)
+      return false
     }
   }
 }

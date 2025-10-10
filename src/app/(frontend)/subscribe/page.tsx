@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { useUserContext } from '@/context/UserContext'
-import { useYoco } from '@/providers/RevenueCat'
+import { useYoco } from '@/providers/Yoco'
 import { useSubscription } from '@/hooks/useSubscription'
 import { yocoService, YocoProduct } from '@/lib/yocoService'
 import { useRouter } from 'next/navigation'

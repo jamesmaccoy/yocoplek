@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useYoco } from '@/providers/RevenueCat'
+import { useYoco } from '@/providers/Yoco'
 
 export type SubscriptionStatus = {
   isSubscribed: boolean

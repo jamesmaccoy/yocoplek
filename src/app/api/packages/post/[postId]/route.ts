@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import configPromise from '@/payload.config'
-import { revenueCatService } from '@/lib/revenueCatService'
+import { yocoService } from '@/lib/yocoService'
 
 export async function GET(
   request: NextRequest,
@@ -34,8 +34,8 @@ export async function GET(
       depth: 2, // Increased depth to include related page data
     })
 
-    // Get RevenueCat products
-    const revenueCatProducts = await revenueCatService.getProducts()
+    // Get Yoco products
+    const yocoProducts = await yocoService.getProducts()
     
     // Helper function to get custom name from packageSettings
     const getCustomName = (packageId: string) => {
@@ -63,8 +63,8 @@ export async function GET(
       return packageSetting?.enabled !== false // Default to true if not explicitly set to false
     }
     
-    // Helper to check if a RevenueCat product is enabled for this post
-    const isRevenueCatEnabledForPost = (productId: string) => {
+    // Helper to check if a Yoco product is enabled for this post
+    const isYocoEnabledForPost = (productId: string) => {
       if (!postData?.packageSettings || !Array.isArray(postData.packageSettings)) {
         return false // Default to disabled unless explicitly configured
       }
@@ -77,7 +77,7 @@ export async function GET(
       return packageSetting?.enabled !== false
     }
 
-    // Convert RevenueCat period to nights
+    // Convert Yoco period to nights
     const getNightsForProduct = (product: any) => {
       const count = Number(product.periodCount) || 1
       switch (product.period) {
@@ -96,7 +96,7 @@ export async function GET(
       }
     }
     
-    // Combine database packages with RevenueCat products
+    // Combine database packages with Yoco products
     const allPackages = [
       ...dbPackages.docs.map(pkg => {
         const customName = getCustomName(pkg.id)
@@ -118,7 +118,7 @@ export async function GET(
           hasCustomName: !!customName
         }
       }),
-      ...revenueCatProducts.map(product => {
+      ...yocoProducts.map(product => {
         const customName = getCustomName(product.id)
         const nights = getNightsForProduct(product)
         return {
@@ -126,15 +126,15 @@ export async function GET(
           name: customName || product.title, // Use custom name if available
           originalName: product.title, // Keep original name for reference
           description: product.description,
-          multiplier: 1, // Default multiplier for RevenueCat products
+          multiplier: 1, // Default multiplier for Yoco products
           category: product.category,
           minNights: nights,
           maxNights: nights,
           revenueCatId: product.id,
           baseRate: product.price,
-          isEnabled: product.isEnabled && isRevenueCatEnabledForPost(product.id),
+          isEnabled: product.isEnabled && isYocoEnabledForPost(product.id),
           features: product.features,
-          source: 'revenuecat',
+          source: 'yoco',
           hasCustomName: !!customName
         }
       })

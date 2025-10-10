@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import configPromise from '@/payload.config'
-import { revenueCatService } from '@/lib/revenueCatService'
+import { yocoService } from '@/lib/yocoService'
 import type { Estimate } from '@/payload-types'
 
 export async function POST(request: NextRequest) {
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       })
 
       // Get RevenueCat products
-      const revenueCatProducts = await revenueCatService.getProducts()
+      const yocoProducts = await yocoService.getProducts()
       
       // Combine database packages with RevenueCat products
       const allPackages = [
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
           features: pkg.features?.map((f: any) => f.feature) || [],
           source: 'database'
         })),
-        ...revenueCatProducts.map(product => ({
+        ...yocoProducts.map(product => ({
           id: product.id,
           name: product.title,
           description: product.description,
@@ -214,26 +214,26 @@ export async function POST(request: NextRequest) {
     // If still not found, check RevenueCat products directly
     if (!pkg) {
       try {
-        const revenueCatProducts = await revenueCatService.getProducts()
-        const revenueCatProduct = revenueCatProducts.find(product => 
+        const yocoProducts = await yocoService.getProducts()
+        const yocoProduct = yocoProducts.find(product => 
           product.id.toLowerCase() === packageType.toLowerCase() || 
           product.id === packageType
         )
         
-        if (revenueCatProduct) {
+        if (yocoProduct) {
           pkg = {
-            id: revenueCatProduct.id,
-            name: revenueCatProduct.title,
-            description: revenueCatProduct.description,
-            multiplier: 1, // Default multiplier for RevenueCat products
-            baseRate: revenueCatProduct.price,
-            category: revenueCatProduct.category,
-            minNights: revenueCatProduct.period === 'hour' ? 1 : revenueCatProduct.periodCount,
-            maxNights: revenueCatProduct.period === 'hour' ? 1 : revenueCatProduct.periodCount,
-            revenueCatId: revenueCatProduct.id,
-            isEnabled: revenueCatProduct.isEnabled && isPackageEnabledForPost(revenueCatProduct.id),
-            features: revenueCatProduct.features,
-            source: 'revenuecat'
+            id: yocoProduct.id,
+            name: yocoProduct.title,
+            description: yocoProduct.description,
+            multiplier: 1, // Default multiplier for Yoco products
+            baseRate: yocoProduct.price,
+            category: yocoProduct.category,
+            minNights: yocoProduct.period === 'hour' ? 1 : yocoProduct.periodCount,
+            maxNights: yocoProduct.period === 'hour' ? 1 : yocoProduct.periodCount,
+            revenueCatId: yocoProduct.id,
+            isEnabled: yocoProduct.isEnabled && isPackageEnabledForPost(yocoProduct.id),
+            features: yocoProduct.features,
+            source: 'yoco'
           }
           multiplier = pkg.multiplier
           baseRate = pkg.baseRate
